@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --accent: #2563eb;
+            --accent-soft: #3b82f6;
+            --green: #16a34a;
+            --red: #dc2626;
+            --amber: #d97706;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-primary); color: var(--text-primary); display: flex; min-height: 100vh; }
+        h1, h2, h3 { font-family: 'DM Serif Display', serif; font-weight: normal; }
+
+        /* Layout */
+        #sidebar { width: 300px; background: var(--bg-sidebar); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; }
+        #main-content { flex-grow: 1; padding: 32px 48px; overflow-y: auto; max-width: 1200px; margin: 0 auto; }
+
+        /* Typography */
+        .page-title { font-size: 2.2rem; margin-bottom: 8px; }
+        .page-subtitle { color: var(--text-secondary); margin-bottom: 32px; font-size: 1.1rem; }
+        .section-title { font-size: 1.6rem; margin-bottom: 12px; }
+        .section-desc { color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6; }
+
+        /* Sidebar Elements */
+        .sidebar-brand { font-size: 1.5rem; font-family: 'DM Serif Display', serif; margin-bottom: 24px; color: var(--accent); }
+        .sidebar-section { margin-bottom: 24px; }
+        .sidebar-section h4 { font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+        .tab-button { width: 100%; text-align: left; padding: 12px 16px; background: transparent; border: none; border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+        .tab-button:hover { background: var(--bg-input); }
+        .tab-button.active { background: #eff6ff; color: var(--accent); font-weight: 600; border-right: 3px solid var(--accent); border-radius: 8px 0 0 8px; }
+
+        /* Forms & Inputs */
+        label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 12px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 0.95rem; margin-bottom: 16px; transition: border 0.2s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background: #ffffff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        button.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-soft)); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; }
+        button.btn-primary:hover { opacity: 0.9; }
+        button.btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; font-size: 0.9rem; }
+        button.btn-secondary:hover { background: #e2e8f0; }
+
+        /* Cards */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .card-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+        /* Banners */
+        .warning-banner { background: #fef2f2; border-left: 4px solid var(--red); padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 0.9rem; color: #991b1b; }
+        .info-banner { background: #eff6ff; border-left: 4px solid var(--accent); padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 0.9rem; color: #1e40af; }
+        .success-banner { background: #f0fdf4; border-left: 4px solid var(--green); padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 24px; font-size: 0.9rem; color: #166534; display: none; }
+
+        /* Markdown/Text rendering */
+        .output-box { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 20px; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; }
+        
+        /* Badges */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-done { background: #dcfce7; color: #166534; }
+        .badge-todo { background: #f1f5f9; color: #64748b; }
+
+        /* Tabs Logic */
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Progress Steps */
+        .progress-list { list-style: none; }
+        .progress-step { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 0.85rem; color: var(--text-secondary); }
+        .step-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+        .step-dot.done { background: var(--green); }
+        .progress-step.done { color: var(--green); font-weight: 500; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; font-size: 0.9rem; }
+        th { background: var(--bg-input); font-weight: 600; }
+        td[contenteditable="true"] { background: #fff; outline: none; transition: background 0.2s; }
+        td[contenteditable="true"]:focus { background: #f8fafc; box-shadow: inset 0 0 0 2px var(--accent); }
+
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="sidebar-brand">📚 Paper Assistant</div>
+        
+        <div class="sidebar-section">
+            <h4>Navigation</h4>
+            <button class="tab-button active" onclick="switchTab('tab-setup')">📋 Setup</button>
+            <button class="tab-button" onclick="switchTab('tab-lit')">📄 Literature</button>
+            <button class="tab-button" onclick="switchTab('tab-gap')">🔍 Research Gap</button>
+            <button class="tab-button" onclick="switchTab('tab-thesis')">🎯 Thesis</button>
+            <button class="tab-button" onclick="switchTab('tab-outline')">📝 Outline</button>
+            <button class="tab-button" onclick="switchTab('tab-sections')">✍️ Section Writer</button>
+            <button class="tab-button" onclick="switchTab('tab-citations')">🔖 Citations</button>
+            <button class="tab-button" onclick="switchTab('tab-ethics')">⚖️ Ethics</button>
+            <button class="tab-button" onclick="switchTab('tab-export')">📦 Export</button>
+        </div>
+
+        <div class="sidebar-section" style="margin-top: auto;">
+            <h4>Project Settings</h4>
+            <label>Citation Style</label>
+            <select id="global-citation-style" onchange="updateState('citationStyle', this.value)">
+                <option value="APA">APA</option>
+                <option value="MLA">MLA</option>
+                <option value="Chicago">Chicago</option>
+                <option value="IEEE">IEEE</option>
+            </select>
+        </div>
+
+        <div class="sidebar-section">
+            <h4>Progress Tracker</h4>
+            <ul class="progress-list" id="progress-tracker">
+                <li class="progress-step" id="prog-setup"><div class="step-dot"></div> Setup</li>
+                <li class="progress-step" id="prog-lit"><div class="step-dot"></div> Literature</li>
+                <li class="progress-step" id="prog-gap"><div class="step-dot"></div> Research Gap</li>
+                <li class="progress-step" id="prog-thesis"><div class="step-dot"></div> Thesis</li>
+                <li class="progress-step" id="prog-outline"><div class="step-dot"></div> Outline</li>
+                <li class="progress-step" id="prog-sections"><div class="step-dot"></div> Sections</li>
+                <li class="progress-step" id="prog-citations"><div class="step-dot"></div> Citations</li>
+            </ul>
+        </div>
+    </aside>
+
+    <main id="main-content">
+        <div class="warning-banner">
+            <strong>⚠️ AI-generated content must be reviewed and verified before submission.</strong> This tool assists — it does not write your paper. You are responsible for all content.
+        </div>
+        <h1 class="page-title">AI Research Paper Assistant</h1>
+        <p class="page-subtitle">Guiding you through ethical, structured academic writing — one stage at a time.</p>
+
+        <div id="tab-setup" class="tab-content active">
+            <h2 class="section-title">📋 Project Setup</h2>
+            <p class="section-desc">Fill in the details about your research paper. This helps the AI give you better, more targeted assistance.</p>
+            
+            <div id="setup-success" class="success-banner">✅ Project setup saved! Move on to the Literature tab.</div>
+
+            <div class="card">
+                <div class="grid-2">
+                    <div>
+                        <label>Paper Title</label>
+                        <input type="text" id="setup-title" placeholder="e.g. The Impact of Social Media...">
+                        
+                        <label>Research Topic (2-4 sentences)</label>
+                        <textarea id="setup-topic" rows="4" placeholder="Describe your topic briefly..."></textarea>
+                        
+                        <label>Keywords (comma-separated)</label>
+                        <input type="text" id="setup-keywords" placeholder="social media, academic performance...">
+                    </div>
+                    <div>
+                        <label>Research Type</label>
+                        <select id="setup-type">
+                            <option>Theory Paper</option>
+                            <option>Survey</option>
+                            <option>Case Study</option>
+                            <option>Experiment</option>
+                            <option>Literature Review</option>
+                        </select>
+
+                        <label>Your Name (for export)</label>
+                        <input type="text" id="setup-author" placeholder="Jane Smith">
+
+                        <label>Institution</label>
+                        <input type="text" id="setup-institution" placeholder="University of...">
+
+                        <div class="grid-2">
+                            <div>
+                                <label>Target Pages</label>
+                                <input type="number" id="setup-pages" value="10" min="4" max="40">
+                            </div>
+                            <div>
+                                <label>Target Words</label>
+                                <input type="number" id="setup-words" value="4000" min="1000" step="500">
+                            </div>
+                        </div>
+                        <label>Target Journal</label>
+                        <input type="text" id="setup-journal" placeholder="e.g. PLOS ONE">
+                    </div>
+                </div>
+                <button class="btn-primary" style="margin-top: 16px;" onclick="saveSetup()">✅ Save Project Setup</button>
+            </div>
+        </div>
+
+        <div id="tab-lit" class="tab-content">
+            <h2 class="section-title">📄 Literature Upload</h2>
+            <p class="section-desc">Upload PDF papers you've collected. The assistant will extract key info to build a matrix.</p>
+
+            <div class="card">
+                <label>Upload PDFs (multiple allowed)</label>
+                <input type="file" id="pdf-upload" multiple accept=".pdf" style="margin-bottom: 12px;">
+                <br>
+                <button class="btn-primary" onclick="uploadPDFs()" id="btn-upload-pdf">📥 Extract Literature</button>
+                <span id="pdf-loader" class="hidden"><span class="loader"></span> Extracting metadata...</span>
+            </div>
+
+            <div id="lit-matrix-container" class="hidden">
+                <h3 class="section-title">📊 Literature Matrix</h3>
+                <p class="section-desc">Review and manually edit columns to build your synthesis.</p>
+                <div style="overflow-x: auto;">
+                    <table id="lit-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Authors</th>
+                                <th>Year</th>
+                                <th>Key Findings</th>
+                                <th>Methodology</th>
+                                <th>Possible Gap</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lit-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-gap" class="tab-content">
+            <h2 class="section-title">🔍 Research Gap Finder</h2>
+            <p class="section-desc">Based on your topic and uploaded literature, the AI will identify potential research gaps.</p>
+
+            <button class="btn-primary" onclick="generateGaps()" id="btn-gen-gaps">🔍 Generate Research Gaps</button>
+            <span id="gap-loader" class="hidden"><span class="loader"></span> Identifying gaps...</span>
+
+            <div id="gaps-output" class="hidden" style="margin-top: 24px;">
+                <div class="card">
+                    <div class="card-title">Identified Gaps</div>
+                    <div class="output-box" id="gaps-text"></div>
+                </div>
+                <label>Select and refine your chosen gap:</label>
+                <textarea id="gap-selected" rows="3" placeholder="Paste and edit your gap here..."></textarea>
+                <button class="btn-primary" onclick="saveGap()">💾 Save Gap</button>
+                <span id="gap-success" class="success-banner" style="display:inline-block; margin-left: 12px; padding: 10px;">✅ Saved!</span>
+            </div>
+        </div>
+
+        <div id="tab-thesis" class="tab-content">
+            <h2 class="section-title">🎯 Thesis Builder</h2>
+            <p class="section-desc">The AI generates 3 thesis options for your chosen gap. Pick one and refine it.</p>
+
+            <button class="btn-primary" onclick="generateThesis()" id="btn-gen-thesis">🎯 Generate Thesis Options</button>
+            <span id="thesis-loader" class="hidden"><span class="loader"></span> Generating thesis options...</span>
+
+            <div id="thesis-output" class="hidden" style="margin-top: 24px;">
+                <div class="card">
+                    <div class="card-title">Thesis Options</div>
+                    <div class="output-box" id="thesis-text"></div>
+                </div>
+                <label>Your Thesis Statement (in your own words):</label>
+                <textarea id="thesis-selected" rows="3" placeholder="Write your final thesis here..."></textarea>
+                <button class="btn-primary" onclick="saveThesis()">💾 Save Thesis</button>
+                <span id="thesis-success" class="success-banner" style="display:inline-block; margin-left: 12px; padding: 10px;">✅ Saved!</span>
+            </div>
+        </div>
+
+        <div id="tab-outline" class="tab-content">
+            <h2 class="section-title">📝 Outline Builder</h2>
+            <p class="section-desc">Generates a structured academic outline. No prose will be written here.</p>
+
+            <button class="btn-primary" onclick="generateOutline()" id="btn-gen-outline">📝 Generate Outline</button>
+            <span id="outline-loader" class="hidden"><span class="loader"></span> Building outline...</span>
+
+            <div id="outline-output" class="hidden" style="margin-top: 24px;">
+                <label>Edit your outline:</label>
+                <textarea id="outline-text" rows="12" style="font-family: monospace;"></textarea>
+                <button class="btn-primary" onclick="saveOutline()">💾 Save Outline</button>
+                <span id="outline-success" class="success-banner" style="display:inline-block; margin-left: 12px; padding: 10px;">✅ Saved!</span>
+            </div>
+        </div>
+
+        <div id="tab-sections" class="tab-content">
+            <div class="warning-banner" style="margin-bottom: 12px;">🚫 <strong>This tool never generates a complete paper.</strong> Each section must be reviewed by you. Do not submit AI text without verification.</div>
+            <h2 class="section-title">✍️ Section Writer</h2>
+            <p class="section-desc">Write one section at a time (max 400 words).</p>
+
+            <div class="card">
+                <label>Select Section</label>
+                <select id="sec-choice">
+                    <option>Introduction</option>
+                    <option>Literature Review</option>
+                    <option>Methodology</option>
+                    <option>Discussion</option>
+                    <option>Conclusion</option>
+                </select>
+
+                <label>Your Notes (What to include)</label>
+                <textarea id="sec-notes" rows="3" placeholder="Add ideas, sources, arguments..."></textarea>
+
+                <label>Include Lit Context?</label>
+                <select id="sec-lit-select" multiple size="4" style="height: auto;"></select>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top:-10px; margin-bottom: 16px;">Hold CTRL/CMD to select multiple.</p>
+
+                <button class="btn-primary" onclick="generateSection()" id="btn-gen-sec">✍️ Draft Section</button>
+                <span id="sec-loader" class="hidden"><span class="loader"></span> Drafting section...</span>
+            </div>
+
+            <div id="sec-output-container" class="hidden">
+                <h3 class="section-title">Generated Draft</h3>
+                <textarea id="sec-draft-text" rows="10" style="margin-bottom: 12px;"></textarea>
+                <button class="btn-primary" onclick="saveSection()">💾 Save Section</button>
+            </div>
+
+            <div id="saved-sections" style="margin-top: 32px;">
+                <h3 class="section-title">💾 Saved Sections</h3>
+                <div id="saved-sec-list"></div>
+            </div>
+        </div>
+
+        <div id="tab-citations" class="tab-content">
+            <div class="warning-banner">🚫 <strong>Never fabricate references.</strong> All citations must be verified real publications via CrossRef.</div>
+            <h2 class="section-title">🔖 Citation Validator</h2>
+            
+            <div class="card">
+                <label>Enter DOI</label>
+                <div style="display: flex; gap: 12px;">
+                    <input type="text" id="doi-input" placeholder="e.g. 10.1038/s41586-021-03819-2" style="margin-bottom: 0;">
+                    <button class="btn-primary" onclick="validateDOI()" id="btn-val-doi">🔍 Validate</button>
+                </div>
+                <span id="doi-loader" class="hidden" style="display: block; margin-top: 12px;"><span class="loader"></span> Looking up reference...</span>
+            </div>
+
+            <div id="doi-result" class="card hidden"></div>
+
+            <h3 class="section-title" style="margin-top: 32px;">📚 My References</h3>
+            <div id="ref-list"></div>
+            
+            <h3 class="section-title" style="margin-top: 32px;">🔎 Similarity Check</h3>
+            <div class="card">
+                <textarea id="sim-text" rows="4" placeholder="Paste paragraph to check against uploaded literature..."></textarea>
+                <button class="btn-secondary" onclick="checkSimilarity()" id="btn-sim">Run Check</button>
+                <div id="sim-result" style="margin-top: 12px; font-weight: bold;"></div>
+            </div>
+        </div>
+
+        <div id="tab-ethics" class="tab-content">
+            <h2 class="section-title">⚖️ Academic Ethics Dashboard</h2>
+            <div class="grid-2">
+                <div class="card" style="background:#f0fdf4; border-color:#86efac;">
+                    <div class="card-title" style="color:#166534;">✅ GREEN ZONE — Ethical AI Use</div>
+                    <p><strong>💡 Brainstorming:</strong> Generating ideas.</p>
+                    <p><strong>📋 Outlining:</strong> Structuring sections.</p>
+                    <p><strong>✏️ Grammar Help:</strong> Improving clarity.</p>
+                    <p><strong>🔖 Citation Formatting:</strong> Auto-formatting verified DOIs.</p>
+                </div>
+                <div class="card" style="background:#fef2f2; border-color:#fca5a5;">
+                    <div class="card-title" style="color:#991b1b;">🚫 RED ZONE — Misconduct</div>
+                    <p><strong>🤖 AI as Co-Author:</strong> Never list AI as author.</p>
+                    <p><strong>📚 Fake References:</strong> Always verify via CrossRef.</p>
+                    <p><strong>🔬 Fabricated Results:</strong> Fraudulent data.</p>
+                    <p><strong>📋 Complete Paper Generation:</strong> Defeats learning.</p>
+                </div>
+            </div>
+            <div class="card" style="background:#1e293b; color: white;">
+                <div class="card-title" style="color:white; border-bottom:1px solid #475569;">📢 AI Disclosure Statement</div>
+                <p style="font-size:0.9rem; line-height:1.6;">Generative AI tools were used for brainstorming, outlining, language refinement, and citation formatting. All content was reviewed and verified by the authors, who remain fully responsible for the accuracy and integrity of the final manuscript.</p>
+            </div>
+        </div>
+
+        <div id="tab-export" class="tab-content">
+            <h2 class="section-title">📦 Export to Overleaf / LaTeX</h2>
+            <p class="section-desc">Generate a complete ZIP package containing LaTeX source, citations, and content.</p>
+
+            <div class="card grid-2">
+                <div>
+                    <label>LaTeX Template</label>
+                    <select id="export-template">
+                        <option>Basic Article</option>
+                        <option>IEEE</option>
+                        <option>Springer</option>
+                        <option>APA</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button class="btn-primary" onclick="exportProject()" id="btn-export" style="width: 100%; justify-content: center;">📦 Generate Export ZIP</button>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title">Project Status</div>
+                    <p id="stat-words">Words Written: 0</p>
+                    <p id="stat-refs">References: 0</p>
+                    <p id="stat-lit">Literature Uploaded: 0</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            setup: { title: "", topic: "", keywords: "", type: "Theory Paper", author: "", institution: "", pages: 10, words: 4000, journal: "" },
+            citationStyle: "APA",
+            lit: [], 
+            gap: "",
+            thesis: "",
+            outline: "",
+            sections: {},
+            references: [],
+            progress: { setup: false, lit: false, gap: false, thesis: false, outline: false, sections: false, citations: false }
+        };
+
+        // --- Navigation ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            updateUI();
+        }
+
+        function updateProgress(key, isDone) {
+            state.progress[key] = isDone;
+            const el = document.getElementById(`prog-${key}`);
+            if(el) {
+                if(isDone) {
+                    el.classList.add('done');
+                    el.querySelector('.step-dot').classList.add('done');
+                } else {
+                    el.classList.remove('done');
+                    el.querySelector('.step-dot').classList.remove('done');
+                }
+            }
+        }
+
+        function updateState(key, value) {
+            state[key] = value;
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update Lit Multiselect in Sections
+            const select = document.getElementById('sec-lit-select');
+            select.innerHTML = '';
+            state.lit.forEach((p, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = p.title.substring(0, 50) + "...";
+                select.appendChild(opt);
+            });
+
+            // Update Stats in Export
+            let words = 0;
+            Object.values(state.sections).forEach(t => words += t.split(/\s+/).filter(w => w.length>0).length);
+            document.getElementById('stat-words').innerText = `Words Written: ${words} / ${state.setup.words}`;
+            document.getElementById('stat-refs').innerText = `References: ${state.references.length}`;
+            document.getElementById('stat-lit').innerText = `Literature Uploaded: ${state.lit.length}`;
+
+            // Update Saved Sections List
+            const secList = document.getElementById('saved-sec-list');
+            secList.innerHTML = '';
+            for(const [k, v] of Object.entries(state.sections)) {
+                if(v) {
+                    secList.innerHTML += `<div class="card"><div class="card-title">${k}</div><div class="output-box">${v}</div></div>`;
+                }
+            }
+            
+            // Update References List
+            const refList = document.getElementById('ref-list');
+            refList.innerHTML = '';
+            const styleMap = { 'APA': 'apa', 'MLA': 'mla', 'Chicago': 'chicago', 'IEEE': 'apa' }; // fallback ieee to apa for display
+            state.references.forEach((r, i) => {
+                const fmt = r[styleMap[state.citationStyle]] || r.apa;
+                refList.innerHTML += `
+                    <div class="card" style="padding: 16px; margin-bottom: 12px;">
+                        <div style="font-weight: 500; margin-bottom: 8px;">${fmt}</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">DOI: ${r.doi}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Actions ---
+        function saveSetup() {
+            state.setup.title = document.getElementById('setup-title').value;
+            state.setup.topic = document.getElementById('setup-topic').value;
+            state.setup.keywords = document.getElementById('setup-keywords').value;
+            state.setup.type = document.getElementById('setup-type').value;
+            state.setup.author = document.getElementById('setup-author').value;
+            state.setup.institution = document.getElementById('setup-institution').value;
+            state.setup.pages = document.getElementById('setup-pages').value;
+            state.setup.words = document.getElementById('setup-words').value;
+            state.setup.journal = document.getElementById('setup-journal').value;
+            
+            if(state.setup.title && state.setup.topic) {
+                updateProgress('setup', true);
+                document.getElementById('setup-success').style.display = 'block';
+                setTimeout(() => document.getElementById('setup-success').style.display = 'none', 3000);
+            } else {
+                alert("Please provide at least a title and topic.");
+            }
+        }
+
+        async function uploadPDFs() {
+            const input = document.getElementById('pdf-upload');
+            if(input.files.length === 0) return alert("Select PDFs first.");
+            
+            const formData = new FormData();
+            for(let f of input.files) formData.append('pdfs', f);
+            
+            document.getElementById('btn-upload-pdf').classList.add('hidden');
+            document.getElementById('pdf-loader').classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/extract_pdf', { method: 'POST', body: formData });
+                const data = await res.json();
+                state.lit = data.map(d => ({...d, findings: "", methodology: "", gap: ""}));
+                updateProgress('lit', true);
+                renderLitMatrix();
+                updateUI();
+            } catch(e) {
+                alert("Error extracting PDFs.");
+            } finally {
+                document.getElementById('btn-upload-pdf').classList.remove('hidden');
+                document.getElementById('pdf-loader').classList.add('hidden');
+            }
+        }
+
+        function renderLitMatrix() {
+            const tbody = document.getElementById('lit-tbody');
+            tbody.innerHTML = '';
+            state.lit.forEach((p, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.title.substring(0,40)}...</td>
+                    <td>${p.authors}</td>
+                    <td>${p.year}</td>
+                    <td contenteditable="true" onblur="state.lit[${i}].findings = this.innerText">${p.findings}</td>
+                    <td contenteditable="true" onblur="state.lit[${i}].methodology = this.innerText">${p.methodology}</td>
+                    <td contenteditable="true" onblur="state.lit[${i}].gap = this.innerText">${p.gap}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('lit-matrix-container').classList.remove('hidden');
+        }
+
+        async function generateGaps() {
+            if(!state.setup.topic) return alert("Complete Setup first.");
+            document.getElementById('btn-gen-gaps').classList.add('hidden');
+            document.getElementById('gap-loader').classList.remove('hidden');
+
+            let ctx = state.lit.slice(0,5).map(p => `- ${p.title} (${p.year}): ${p.abstract.substring(0,200)}`).join('\n');
+            
+            try {
+                const res = await fetch('/api/generate_gaps', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: state.setup.topic, research_type: state.setup.type, lit_context: ctx})
+                });
+                const data = await res.json();
+                document.getElementById('gaps-text').innerText = data.result;
+                document.getElementById('gaps-output').classList.remove('hidden');
+                updateProgress('gap', true);
+            } catch(e) { alert("Error generating gaps."); }
+            finally {
+                document.getElementById('btn-gen-gaps').classList.remove('hidden');
+                document.getElementById('gap-loader').classList.add('hidden');
+            }
+        }
+
+        function saveGap() {
+            state.gap = document.getElementById('gap-selected').value;
+            document.getElementById('gap-success').style.display = 'inline-block';
+            setTimeout(() => document.getElementById('gap-success').style.display = 'none', 3000);
+        }
+
+        async function generateThesis() {
+            if(!state.gap) return alert("Save a Gap first.");
+            document.getElementById('btn-gen-thesis').classList.add('hidden');
+            document.getElementById('thesis-loader').classList.remove('hidden');
+            try {
+                const res = await fetch('/api/generate_thesis', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: state.setup.topic, research_type: state.setup.type, gap: state.gap})
+                });
+                const data = await res.json();
+                document.getElementById('thesis-text').innerText = data.result;
+                document.getElementById('thesis-output').classList.remove('hidden');
+                updateProgress('thesis', true);
+            } catch(e) { alert("Error generating thesis."); }
+            finally {
+                document.getElementById('btn-gen-thesis').classList.remove('hidden');
+                document.getElementById('thesis-loader').classList.add('hidden');
+            }
+        }
+
+        function saveThesis() {
+            state.thesis = document.getElementById('thesis-selected').value;
+            document.getElementById('thesis-success').style.display = 'inline-block';
+            setTimeout(() => document.getElementById('thesis-success').style.display = 'none', 3000);
+        }
+
+        async function generateOutline() {
+            if(!state.thesis) return alert("Save a Thesis first.");
+            document.getElementById('btn-gen-outline').classList.add('hidden');
+            document.getElementById('outline-loader').classList.remove('hidden');
+            try {
+                const res = await fetch('/api/generate_outline', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({topic: state.setup.topic, thesis: state.thesis, research_type: state.setup.type, page_count: state.setup.pages})
+                });
+                const data = await res.json();
+                document.getElementById('outline-text').value = data.result;
+                document.getElementById('outline-output').classList.remove('hidden');
+                updateProgress('outline', true);
+            } catch(e) { alert("Error generating outline."); }
+            finally {
+                document.getElementById('btn-gen-outline').classList.remove('hidden');
+                document.getElementById('outline-loader').classList.add('hidden');
+            }
+        }
+
+        function saveOutline() {
+            state.outline = document.getElementById('outline-text').value;
+            document.getElementById('outline-success').style.display = 'inline-block';
+            setTimeout(() => document.getElementById('outline-success').style.display = 'none', 3000);
+        }
+
+        async function generateSection() {
+            if(!state.outline) return alert("Save an Outline first.");
+            const sec = document.getElementById('sec-choice').value;
+            const notes = document.getElementById('sec-notes').value;
+            const sels = Array.from(document.getElementById('sec-lit-select').selectedOptions).map(o => parseInt(o.value));
+            let litSnippet = sels.map(i => `- ${state.lit[i].title}: ${state.lit[i].abstract.substring(0,200)}`).join('\n');
+
+            document.getElementById('btn-gen-sec').classList.add('hidden');
+            document.getElementById('sec-loader').classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/generate_section', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        thesis: state.thesis, research_type: state.setup.type, outline: state.outline, 
+                        notes: notes, lit_snippet: litSnippet, section_choice: sec
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('sec-draft-text').value = data.result;
+                document.getElementById('sec-output-container').classList.remove('hidden');
+            } catch(e) { alert("Error generating section."); }
+            finally {
+                document.getElementById('btn-gen-sec').classList.remove('hidden');
+                document.getElementById('sec-loader').classList.add('hidden');
+            }
+        }
+
+        function saveSection() {
+            const sec = document.getElementById('sec-choice').value;
+            state.sections[sec] = document.getElementById('sec-draft-text').value;
+            updateProgress('sections', true);
+            updateUI();
+            alert(`${sec} saved successfully.`);
+        }
+
+        async function validateDOI() {
+            const doi = document.getElementById('doi-input').value;
+            if(!doi) return alert("Enter DOI.");
+            
+            document.getElementById('btn-val-doi').classList.add('hidden');
+            document.getElementById('doi-loader').classList.remove('hidden');
+            
+            try {
+                const res = await fetch('/api/validate_doi', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({doi: doi})
+                });
+                const data = await res.json();
+                const out = document.getElementById('doi-result');
+                out.classList.remove('hidden');
+                
+                if(data.error) {
+                    out.innerHTML = `<span style="color:var(--red)">❌ ${data.error}</span>`;
+                } else {
+                    window._lastValidRef = data;
+                    out.innerHTML = `
+                        <div class="card-title">✅ Valid Reference</div>
+                        <p><strong>${data.title}</strong></p>
+                        <p>${data.authors} (${data.year})</p>
+                        <p><em>${data.journal}</em></p>
+                        <button class="btn-primary" style="margin-top:12px;" onclick="addReference()">➕ Add to References</button>
+                    `;
+                }
+            } catch(e) { alert("Validation error."); }
+            finally {
+                document.getElementById('btn-val-doi').classList.remove('hidden');
+                document.getElementById('doi-loader').classList.add('hidden');
+            }
+        }
+
+        function addReference() {
+            if(window._lastValidRef && !state.references.find(r => r.doi === window._lastValidRef.doi)) {
+                state.references.push(window._lastValidRef);
+                updateProgress('citations', true);
+                updateUI();
+                alert("Reference added.");
+                document.getElementById('doi-result').classList.add('hidden');
+            }
+        }
+
+        async function checkSimilarity() {
+            const txt = document.getElementById('sim-text').value;
+            if(!txt) return;
+            const allLit = state.lit.map(l => l.text).join(" ");
+            if(!allLit) return alert("No literature uploaded.");
+            
+            const res = await fetch('/api/similarity', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text_a: txt, text_b: allLit})
+            });
+            const data = await res.json();
+            const pct = (data.score * 100).toFixed(1);
+            const resDiv = document.getElementById('sim-result');
+            if(data.score > 0.4) resDiv.innerHTML = `<span style="color:var(--red)">🔴 High Similarity: ${pct}%</span>`;
+            else if(data.score > 0.2) resDiv.innerHTML = `<span style="color:var(--amber)">🟡 Medium Similarity: ${pct}%</span>`;
+            else resDiv.innerHTML = `<span style="color:var(--green)">🟢 Low Similarity: ${pct}%</span>`;
+        }
+
+        async function exportProject() {
+            if(Object.keys(state.sections).length === 0) return alert("Draft and save at least one section before exporting.");
+            document.getElementById('btn-export').innerText = "📦 Packaging...";
+            
+            try {
+                const res = await fetch('/api/export', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        title: state.setup.title, author: state.setup.author, journal: state.setup.journal,
+                        template: document.getElementById('export-template').value,
+                        sections: state.sections, outline: state.outline, references: state.references
+                    })
+                });
+                if(res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "paper.zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                } else { alert("Export failed."); }
+            } catch(e) { alert("Network error during export."); }
+            finally {
+                document.getElementById('btn-export').innerText = "📦 Generate Export ZIP";
+            }
+        }
+    </script>
+</body>
+</html>
